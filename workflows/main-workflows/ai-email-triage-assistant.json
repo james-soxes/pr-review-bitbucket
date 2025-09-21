@@ -1,11 +1,176 @@
 {
   "createdAt": "2025-09-16T13:31:51.383Z",
-  "updatedAt": "2025-09-21T08:43:54.809Z",
+  "updatedAt": "2025-09-21T14:10:12.000Z",
   "id": "JasTV4gv4NDVVogA",
   "name": "AI Email Triage Assistant",
   "active": false,
   "isArchived": false,
   "nodes": [
+    {
+      "parameters": {
+        "height": 464,
+        "width": 320,
+        "content": "# 🤖 AI Email Triage Assistant\n\n## 📋 Mục đích (Purpose)\nTự động phân loại và xử lý email từ james@soxes.ch, sử dụng AI để phân tích nội dung và thực hiện các hành động phù hợp theo từng loại email.\n\n## 🚀 Trigger\n- **Gmail Trigger**: Kiểm tra email chưa đọc từ james@soxes.ch\n- **Tần suất**: Mỗi giờ vào phút 15\n- **Bộ lọc**: Chỉ email unread từ sender cụ thể\n\n## 🔄 Các bước chính\n1. **Thu thập Email** → Chuyển đổi HTML sang Markdown\n2. **Tiền xử lý** → Trích xuất email gốc (nếu forwarded)\n3. **AI Phân tích** → Gọi sub-workflow AI Analysis Service\n4. **Phân nhánh** → Switch theo category (TASK_REQUEST, ESTIMATION_REQUEST, etc.)\n5. **Xử lý hành động** → Tạo Jira task, Confluence page, MS Teams notification\n6. **Hoàn tất** → Đánh dấu email đã đọc\n\n## 🔐 Credentials cần thiết\n- **Gmail OAuth2**: Đọc và quản lý email\n- **OpenAI API**: AI analysis (GPT-4)\n- **Jira/Confluence**: Tạo task và page\n- **MS Teams Webhook**: Gửi thông báo"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5200,
+        -800
+      ],
+      "id": "sticky-main-overview",
+      "name": "📖 Workflow Overview"
+    },
+    {
+      "parameters": {
+        "height": 200,
+        "width": 280,
+        "content": "## 📨 Email Collection & Processing\n\n**Chức năng**: Thu thập email unread và chuẩn bị dữ liệu\n\n**Workflow**:\n1. Gmail Trigger → Lấy email mới\n2. HTML to Markdown → Chuẩn hóa format\n3. Extract Original Email → Xử lý forwarded email\n\n**Output**: Email content đã được clean và structured"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4880,
+        -600
+      ],
+      "id": "sticky-email-collection",
+      "name": "📨 Email Collection"
+    },
+    {
+      "parameters": {
+        "height": 180,
+        "width": 260,
+        "content": "## 🧠 AI Analysis Hub\n\n**Sub-workflow**: DrLDQaf54G0ZhJpf\n\n**Chức năng**:\n- Phân tích nội dung email bằng GPT-4o\n- Phân loại category (TASK_REQUEST, ESTIMATION_REQUEST, etc.)\n- Xác định priority (High/Medium/Low)\n- Trích xuất metadata\n\n**Retry Logic**: 2 lần, mỗi lần cách 5 giây"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4200,
+        -600
+      ],
+      "id": "sticky-ai-analysis",
+      "name": "🧠 AI Analysis"
+    },
+    {
+      "parameters": {
+        "height": 240,
+        "width": 300,
+        "content": "## 🔀 Email Category Router\n\n**Switch Node**: Phân nhánh theo AI category\n\n**6 nhánh xử lý**:\n- **TASK_REQUEST** → Tạo Jira task\n- **ESTIMATION_REQUEST** → Tạo Confluence page\n- **CONFLUENCE_LINK_ESTIMATE** → Phân tích link Confluence\n- **POLICY_UPDATE** → Gửi cảnh báo MS Teams\n- **SPAM_MARKETING** → Chuyển vào spam\n- **OTHER** → Xử lý chung\n\n**Logic**: Exact string match với AI output"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3760,
+        -700
+      ],
+      "id": "sticky-category-router",
+      "name": "🔀 Category Router"
+    },
+    {
+      "parameters": {
+        "height": 160,
+        "width": 240,
+        "content": "## 📋 Jira Task Creation\n\n**Nhánh**: TASK_REQUEST\n\n**Flow**:\n1. Prepare Data for Jira\n2. Call sub-Create-Jira-Task\n3. Mark email as read\n\n**Output**: Jira task với AI summary và context"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2500,
+        -900
+      ],
+      "id": "sticky-jira-task",
+      "name": "📋 Jira Integration"
+    },
+    {
+      "parameters": {
+        "height": 160,
+        "width": 240,
+        "content": "## 📄 Confluence Page Creation\n\n**Nhánh**: ESTIMATION_REQUEST\n\n**Flow**:\n1. Prepare Data for Confluence\n2. Call sub-Create-Confluence-Page\n3. Mark email as read\n\n**Output**: Structured estimation page với AI breakdown"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2500,
+        -1100
+      ],
+      "id": "sticky-confluence-page",
+      "name": "📄 Confluence Integration"
+    },
+    {
+      "parameters": {
+        "height": 180,
+        "width": 260,
+        "content": "## 🔗 Confluence Link Analysis\n\n**Nhánh**: CONFLUENCE_LINK_ESTIMATE\n\n**Flow**:\n1. Extract Page ID from URL\n2. Fetch Confluence Page content\n3. Convert to Markdown\n4. AI Analysis for breakdown\n5. Create personal analysis page\n\n**Use case**: Estimate công việc từ Confluence specs"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3200,
+        300
+      ],
+      "id": "sticky-confluence-analysis",
+      "name": "🔗 Confluence Analysis"
+    },
+    {
+      "parameters": {
+        "height": 140,
+        "width": 220,
+        "content": "## 🚨 Policy Alert\n\n**Nhánh**: POLICY_UPDATE\n\n**Flow**:\n1. Prepare alert data\n2. Call MS Teams notification\n3. Mark as read\n\n**Use case**: Cảnh báo cập nhật policy quan trọng"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3600,
+        -1350
+      ],
+      "id": "sticky-policy-alert",
+      "name": "🚨 Policy Alert"
+    },
+    {
+      "parameters": {
+        "height": 120,
+        "width": 200,
+        "content": "## 🗑️ Spam Management\n\n**Nhánh**: SPAM_MARKETING\n\n**Action**: Tự động chuyển email vào thư mục Spam\n\n**Error Handling**: Continue nếu fail"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2200,
+        -400
+      ],
+      "id": "sticky-spam-management",
+      "name": "🗑️ Spam Filter"
+    },
+    {
+      "parameters": {
+        "height": 140,
+        "width": 240,
+        "content": "## ⚡ Error Handling\n\n**Global Error Workflow**: DbzKrYofpCNCrr50\n\n**Features**:\n- Continue on Gmail errors\n- AI retry logic (2x, 5s interval)\n- Error notification via MS Teams\n\n**Philosophy**: Fail gracefully, don't break the flow"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        -600
+      ],
+      "id": "sticky-error-handling",
+      "name": "⚡ Error Handling"
+    },
+    {
+      "parameters": {
+        "height": 200,
+        "width": 280,
+        "content": "## 🧪 Testing & Monitoring\n\n**Manual Test Cases**:\n1. Forward email TASK_REQUEST → Check Jira creation\n2. Send ESTIMATION_REQUEST → Verify Confluence page\n3. Send Confluence link → Test analysis flow\n4. Disconnect network during AI call → Verify retry\n5. Invalid email format → Check error handling\n\n**Monitoring**:\n- Check execution logs in n8n\n- Monitor AI API costs\n- Track error rates\n\n**Success Metrics**: >99% uptime, <1% error rate"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1300,
+        -800
+      ],
+      "id": "sticky-testing-monitoring",
+      "name": "🧪 Testing & Monitoring"
+    },
     {
       "parameters": {
         "rules": {
