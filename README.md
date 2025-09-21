@@ -138,8 +138,8 @@ n8n-automation-suite/
 #### Input Data Structure:
 ```json
 {
-  "spaceKey": "~james",
-  "parentId": 673022176,
+  "spaceKey": "james",
+  "parentId": 123456,
   "originalSender": "Client Name <client@example.com>",
   "summary": "AI-generated project summary",
   "priority": "Medium|High|Low",
