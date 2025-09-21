@@ -1,0 +1,192 @@
+{
+  "createdAt": "2025-09-21T12:28:21.861Z",
+  "updatedAt": "2025-09-21T13:04:22.555Z",
+  "id": "DbzKrYofpCNCrr50",
+  "name": "[System] - Global Error Handler",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d46a05f8-271f-42e4-a427-496cc08da3bb",
+      "name": "Error Trigger",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json }}",
+        "options": {
+          "systemMessage": "=Sure! Here is a **full system prompt** for an LLM/AI agent.  \nIt is ready for pasting into an AI system as the only prompt/instruction needed (includes role, context, and rules for output):\n\n***\n\n**Role:**  \nYou are an expert automation assistant for workflow monitoring and alerting, specializing in error analysis and card generation for engineering and DevOps teams. Your task is to process technical error JSON (from n8n or similar systems) and generate structured status/alert cards following a strict MessageCard template for Microsoft Teams.\n\n**Context:**  \n- You receive as input a technical error JSON, which contains error and execution details for a failed automation/workflow job (fields are sometimes missing, structure may vary).\n- Your job is to extract all necessary information from the input JSON, map to the correct semantic fields, and produce a single MessageCard JSON object strictly according to the provided template.  \n- You never change wording, emoji, or structure from the template except to fill in extracted values.\n- All fields in the template must be present in the output, even if you must leave them empty due to missing input data.  \n- All outputs must be valid JSON for immediate use as a payload in Microsoft Teams or an internal status dashboard.\n\n**Template** (fill values from input JSON as best as possible):\n\n```json\n{\n  \"@type\": \"MessageCard\",\n  \"@context\": \"http://schema.org/extensions\",\n  \"themeColor\": \"FFB300\",\n  \"summary\": \"⚠️ Confluence Page Creation Failed - Duplicate Title\",\n  \"title\": \"⚠️ Confluence Error: Trang bị trùng tiêu đề\",\n  \"sections\": [\n    {\n      \"activityTitle\": \"Trang Confluence không thể tạo do bị trùng tiêu đề\",\n      \"activitySubtitle\": \"**Workflow**: <workflow_name>\\n**Execution ID**: <execution_id>\",\n      \"facts\": [\n        { \"name\": \"🔨 Execution ID\", \"value\": \"<execution_id>\" },\n        { \"name\": \"🔗 Link\", \"value\": \"[Mở execution](<execution_link>)\" },\n        { \"name\": \"📝 Tiêu đề bị trùng\", \"value\": \"<duplicate_page_title>\" },\n        { \"name\": \"🌐 Không gian\", \"value\": \"<space_key>\" },\n        { \"name\": \"🕑 Thời gian\", \"value\": \"<timestamp_human_readable>\" },\n        { \"name\": \"💬 Mô tả lỗi\", \"value\": \"<error_description>\" }\n      ],\n      \"text\": \"_Vui lòng kiểm tra lại danh sách page trong không gian, đổi tên page khi cần, hoặc hợp nhất nội dung để tránh trùng lặp._\",\n      \"markdown\": true\n    }\n  ],\n  \"potentialAction\": [\n    {\n      \"@type\": \"OpenUri\",\n      \"name\": \"🔎 Xem Execution\",\n      \"targets\": [\n        { \"os\": \"default\", \"uri\": \"<execution_link>\" }\n      ]\n    }\n  ]\n}\n```\n\n**Instructions:**  \n- Strictly extract and fill in:\n   - workflow_name (input.workflow.name, empty string if unavailable)\n   - execution_id (input.execution.id, empty if unavailable)\n   - execution_link (input.execution.url, or constructed if possible)\n   - duplicate_page_title (input.context.request.body.title, or closest matching field)\n   - space_key (input.context.request.body.space.key, or closest)\n   - error_description (input.execution.error.description or message)\n   - timestamp_human_readable (convert input.execution.error.timestamp to standard human date/time, or leave blank if missing)\n- If a field is missing in the input JSON, ensure the template key is still present with an empty value.\n- **Output ONLY the final formatted MessageCard JSON ( without ``` and json prefix). Do NOT include any explanation, preamble, or extra text.**\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "43cf8232-2ec1-4e81-9b04-4f91307749e2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "gpt-3.5-turbo"
+        },
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        304,
+        224
+      ],
+      "id": "05a8bfce-4613-4fbc-b20e-1ac2e3648abd",
+      "name": "[AI] - Analysis Error",
+      "credentials": {
+        "openAiApi": {
+          "id": "rvEVzeazfzW6v66O",
+          "name": "OPEN_AI__Credential_tiennguyen15"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://soxesch.webhook.office.com/webhookb2/73e7b54a-62e6-48d9-9d94-d67485c65f95@8a0574d9-5f21-4779-a076-b4818eb23b70/IncomingWebhook/3c4ae5e69fb44fd1892997a84730ddcc/34d0a5f9-a3e2-49ad-86f0-c8509e0ebf7f/V2tfiFZH2mSluvRzr5sorW7XJU41IGQL0d0jOznQuVHeA1",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"@type\": \"MessageCard\",\n  \"@context\": \"http://schema.org/extensions\",\n  \"themeColor\": \"FFB300\",\n  \"summary\": \"⚠️ Confluence Page Creation Failed - Duplicate Title\",\n  \"title\": \"⚠️ Confluence Error: Trang bị trùng tiêu đề\",\n  \"sections\": [\n    {\n      \"activityTitle\": \"Trang Confluence không thể tạo do bị trùng tiêu đề\",\n      \"activitySubtitle\": \"**Workflow**: sub-Create-Confluence-Page\\n**Node**: [CREATE] - Confluence Page - Estimate\",\n      \"facts\": [\n        {\n          \"name\": \"🔨 Execution ID\",\n          \"value\": \"1187\"\n        },\n        {\n          \"name\": \"🔗 Link\",\n          \"value\": \"[Mở execution](https://tienworkflow.tino.page/workflow/RijpYfQk5ngFJNpN/executions/1187)\"\n        },\n        {\n          \"name\": \"📝 Tiêu đề bị trùng\",\n          \"value\": \"[Estimation] - Email yêu cầu nhóm kỹ thuật cung cấp ước tính thời gian và công việc cho dự án mới tên SBM với việc triển khai chức năng Đăng nhập và tích hợp Telebooker, yêu cầu trả lời trước cuối tuần này.\"\n        },\n        {\n          \"name\": \"🌐 Không gian\",\n          \"value\": \"~james\"\n        },\n        {\n          \"name\": \"🕑 Thời gian\",\n          \"value\": \"2025-09-21 19:47:53\"\n        },\n        {\n          \"name\": \"💬 Mô tả lỗi\",\n          \"value\": \"A page with this title already exists: A page already exists with the same TITLE in this space\"\n        }\n      ],\n      \"text\": \"_Vui lòng kiểm tra lại danh sách page trong không gian, đổi tên page khi cần, hoặc hợp nhất nội dung để tránh trùng lặp._\",\n      \"markdown\": true\n    }\n  ],\n  \"potentialAction\": [\n    {\n      \"@type\": \"OpenUri\",\n      \"name\": \"🔎 Xem Execution\",\n      \"targets\": [\n        {\n          \"os\": \"default\",\n          \"uri\": \"https://tienworkflow.tino.page/workflow/RijpYfQk5ngFJNpN/executions/1187\"\n        }\n      ]\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        576,
+        0
+      ],
+      "id": "4698bb5c-84f8-4deb-8ddb-b595453ccb3b",
+      "name": "[POST] - Message to MS Team"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "[POST] - Message to MS Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[AI] - Analysis Error": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "97dfd17e-85e3-4d86-8ec2-93ab70fb8897",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "createdAt": "2025-09-21T12:28:21.861Z",
+      "updatedAt": "2025-09-21T12:28:21.861Z",
+      "role": "workflow:owner",
+      "workflowId": "DbzKrYofpCNCrr50",
+      "projectId": "9I0qukrB9koLQXrY",
+      "project": {
+        "createdAt": "2025-09-14T06:20:07.772Z",
+        "updatedAt": "2025-09-14T06:22:07.816Z",
+        "id": "9I0qukrB9koLQXrY",
+        "name": "Tien Nguyen <tiencop77@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "projectRelations": [
+          {
+            "createdAt": "2025-09-14T06:20:07.772Z",
+            "updatedAt": "2025-09-14T06:20:07.772Z",
+            "userId": "b559921d-0c51-4f8e-9165-89c9b21bcae2",
+            "projectId": "9I0qukrB9koLQXrY",
+            "user": {
+              "createdAt": "2025-09-14T06:20:07.003Z",
+              "updatedAt": "2025-09-21T12:47:44.849Z",
+              "id": "b559921d-0c51-4f8e-9165-89c9b21bcae2",
+              "email": "tiencop77@gmail.com",
+              "firstName": "Tien",
+              "lastName": "Nguyen",
+              "personalizationAnswers": {
+                "version": "v4",
+                "personalization_survey_submitted_at": "2025-09-14T06:22:29.824Z",
+                "personalization_survey_n8n_version": "1.110.1",
+                "automationGoalDevops": [
+                  "other",
+                  "data-syncing",
+                  "incident-response",
+                  "monitoring-alerting",
+                  "cloud-infrastructure-orchestration",
+                  "reporting",
+                  "ticketing-systems-integrations"
+                ],
+                "companyType": "saas",
+                "role": "engineering",
+                "reportedSource": "google"
+              },
+              "settings": {
+                "userActivated": true,
+                "easyAIWorkflowOnboarded": true,
+                "firstSuccessfulWorkflowId": "DbzKrYofpCNCrr50",
+                "userActivatedAt": 1758458862449
+              },
+              "disabled": false,
+              "mfaEnabled": false,
+              "lastActiveAt": "2025-09-21",
+              "isPending": false
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tags": []
+}
