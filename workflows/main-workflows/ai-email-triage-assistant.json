@@ -3,7 +3,7 @@
   "updatedAt": "2025-09-21T14:10:12.000Z",
   "id": "JasTV4gv4NDVVogA",
   "name": "AI Email Triage Assistant",
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -473,7 +473,7 @@
           "name": "Gmail account"
         }
       },
-      "disabled": true
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -523,7 +523,8 @@
         "gmailOAuth2": {
           "id": "YIw7bvsLVAOVl1mk",
           "name": "Gmail account"
-        }
+        },
+        "onError": "continueRegularOutput"
       }
     },
     {
@@ -548,7 +549,8 @@
         "gmailOAuth2": {
           "id": "YIw7bvsLVAOVl1mk",
           "name": "Gmail account"
-        }
+        },
+        "onError": "continueRegularOutput"
       }
     },
     {

@@ -1,6 +1,6 @@
 {
   "createdAt": "2025-09-20T08:47:27.670Z",
-  "updatedAt": "2025-09-20T09:02:02.444Z",
+  "updatedAt": "2025-09-21T13:48:45.839Z",
   "id": "DrLDQaf54G0ZhJpf",
   "name": "sub-AI-Analysis-Service",
   "active": false,
@@ -43,8 +43,11 @@
         192
       ],
       "id": "f109f4dd-8cd1-439f-8339-a3ec9ae4c848",
-      "name": "[ANALYZE] - Email Content",
-      "credentials": {
+        "name": "[ANALYZE] - Email Content",
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 5000,
+        "credentials": {
         "openAiApi": {
           "id": "rvEVzeazfzW6v66O",
           "name": "OPEN_AI__Credential_tiennguyen15"
