@@ -1,8 +1,9 @@
 # 📁 Project Reorganization Summary
 
 **Date**: September 21, 2025  
-**Status**: ✅ Completed  
-**Total Files Organized**: 17 files moved and organized
+**Status**: ✅ Completed + Updated  
+**Total Files Organized**: 25 files moved and organized  
+**Latest Update**: Workflow folder reorganization completed
 
 ## 🔄 Before & After Structure
 
@@ -27,11 +28,18 @@ n8n-automation-suite/
 ```
 n8n-automation-suite/
 ├── 📂 workflows/                  # Centralized workflow location
-│   ├── 🧩 components/            # Reusable components
-│   │   ├── sub-Create-Confluence-Page.json
-│   │   └── README.md
-│   └── 📋 templates/             # Complete solutions
-│       └── .gitkeep
+│   ├── 🚀 main-workflows/        # Primary workflows with triggers
+│   │   ├── ai-email-triage-assistant.json
+│   │   └── jira-daily-digest-v1.1.json
+│   ├── ⚙️ sub-workflows/          # Reusable service workflows
+│   │   ├── ai-analysis-service.json
+│   │   ├── create-confluence-page.json
+│   │   ├── create-jira-task.json
+│   │   └── send-ms-teams-message.json
+│   ├── 📋 archived/              # Deprecated/duplicate workflows
+│   │   ├── AI-Email-Triage-Assistant-duplicate.json
+│   │   └── sub-Create-Confluence-Page-duplicate.json
+│   └── 📖 README.md              # Comprehensive workflow documentation
 ├── 📂 lib/                       # Code libraries
 │   └── refactored-confluence-page-creator.js
 ├── 📂 config/                    # All configuration files
