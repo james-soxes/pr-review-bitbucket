@@ -1,0 +1,93 @@
+{
+  "createdAt": "2025-09-20T09:17:26.244Z",
+  "updatedAt": "2025-09-20T15:00:03.054Z",
+  "id": "DwfZVlGV8BkAy0mU",
+  "name": "sub-Create-Jira-Task",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f8ce4ac3-0102-450f-84d3-d76029764e80",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "project": {
+          "__rl": true,
+          "value": "10866",
+          "mode": "list",
+          "cachedResultName": "James' Management Hub"
+        },
+        "issueType": {
+          "__rl": true,
+          "value": "10289",
+          "mode": "list",
+          "cachedResultName": "Task"
+        },
+        "summary": "=[EMAIL TASK] - {{ $json.summary }}",
+        "additionalFields": {
+          "description": "={{ $json.description }}",
+          "priority": {
+            "__rl": true,
+            "value": "={{ $json.mappedPriority }}",
+            "mode": "id"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -32
+      ],
+      "id": "d1c33206-a627-4a4b-8ce7-b9d50269288b",
+      "name": "[CREATE] - Jira Task from Emai",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "vuqHzqXD5jQQXkbq",
+          "name": "Atlassian_Credential_soxes"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "[CREATE] - Jira Task from Emai",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "1bc7bc30-95a1-4146-aee6-8562b3c088ec",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "createdAt": "2025-09-20T09:17:26.244Z",
+      "updatedAt": "2025-09-20T09:17:26.244Z",
+      "role": "workflow:owner",
+      "workflowId": "DwfZVlGV8BkAy0mU",
+      "projectId": "9I0qukrB9koLQXrY"
+    }
+  ],
+  "tags": []
+}

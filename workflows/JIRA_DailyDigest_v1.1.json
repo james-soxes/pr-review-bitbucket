@@ -1,0 +1,629 @@
+{
+  "createdAt": "2025-09-14T06:26:43.498Z",
+  "updatedAt": "2025-09-14T12:05:35.222Z",
+  "id": "TpkHechdPUuHi8Co",
+  "name": "JIRA_DailyDigest_v1.1",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": "={{ $json['Max Results'] }}",
+        "options": {
+          "fieldsByKey": false,
+          "jql": "=assignee = {{ $json['JiraUserAccountId\t'] }} AND status not in (Closed, Done, Resolved)"
+        }
+      },
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        384,
+        64
+      ],
+      "id": "662158e5-34b1-4975-8c58-a6fb64e55b56",
+      "name": "GET_Jira_MyOpenIssues",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "vuqHzqXD5jQQXkbq",
+          "name": "JIRA_Credential_soxes"
+        }
+      },
+      "notes": "Mảng JSON của các issue assign cho bạn chưa đóng."
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -64,
+        256
+      ],
+      "id": "3dc3e36c-f88a-41b4-a39f-a1dab01ecdca",
+      "name": "TRIGGER_Schedule_DailyDigest",
+      "notesInFlow": false,
+      "notes": "Daily Jira digest trigger\n- Runs: 8:00 AM, Monday-Friday  \n- Timezone: Asia/Ho_Chi_Minh (+07:00)\n- Purpose: Fetch daily Jira updates for personal dashboard\n- Dependencies: Jira API credentials, Teams webhook"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": "={{ $json['Max Results'] }}",
+        "options": {
+          "fields": "key, fields.summary, fields.assignee.displayName, fields.dueDate",
+          "fieldsByKey": false,
+          "jql": "=project in ({{ $json.ProjectKeys }}) AND due < now() AND status not in (Closed, Done, Resolved)\n"
+        }
+      },
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        384,
+        256
+      ],
+      "id": "6738e1c4-6d9c-40ff-90d8-a72d882ab388",
+      "name": "GET_Jira_TeamOverdue",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "vuqHzqXD5jQQXkbq",
+          "name": "JIRA_Credential_soxes"
+        }
+      },
+      "notes": " Mảng JSON của các issue quá hạn team."
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": "={{ $json['Max Results'] }}",
+        "options": {
+          "fieldsByKey": false,
+          "jql": "=text ~ currentUser() AND updated >= -1d"
+        }
+      },
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        384,
+        448
+      ],
+      "id": "9da06648-674f-4d30-908f-12f1cd6b10d4",
+      "name": "GET_Jira_MentionsReviews",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "vuqHzqXD5jQQXkbq",
+          "name": "JIRA_Credential_soxes"
+        }
+      },
+      "notes": "Mảng JSON của issue có mention bạn hoặc cập nhật gần nhất trong 24h."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items from the merge node\nconst allItems = $input.all();\n\n// Categorize data by source node\nlet myIssues = [];\nlet overdueIssues = [];\nlet mentionIssues = [];\n\n// Add try-catch wrapper\ntry {\n  // Categorize items by their source node index\n  allItems.forEach(item => {\n    const pairedItem = item.pairedItem;\n    if (pairedItem && pairedItem.item !== undefined) {\n      const sourceNodeIndex = pairedItem.item;\n      if (sourceNodeIndex === 0) {\n        myIssues.push(item);\n      } else if (sourceNodeIndex === 1) {\n        overdueIssues.push(item);\n      } else if (sourceNodeIndex === 2) {\n        mentionIssues.push(item);\n      }\n    }\n  });\n\n  // Initialize digest message\n  let digestMessage = \"\";\n\n  // Section builder with safe handling\n  function formatSection(title, issues, formatter) {\n    let section = \"\";\n    if (issues && issues.length > 0) {\n      section += `${title} (${issues.length})\\n`;\n      issues.forEach(issue => {\n        try {\n          section += formatter(issue) + \"\\n\";\n        } catch (error) {\n          section += \"• [ERROR] Unable to format this issue.\\n\";\n        }\n      });\n      section += \"\\n\";\n    }\n    return section;\n  }\n\n  // Formatters for each group\n  const myFormatter = (item) => {\n    const issue = item.json;\n    const key = issue.key || 'NO-KEY';\n    const summary = issue.fields?.summary || 'No Summary';\n    const priority = issue.fields?.priority?.name || 'No Priority';\n    return `• [${key}] ${summary} _(Priority: ${priority})_`;\n  };\n\n  const overdueFormatter = (item) => {\n    const issue = item.json;\n    const key = issue.key || 'NO-KEY';\n    const summary = issue.fields?.summary || 'No Summary';\n    const assignee = issue.fields?.assignee?.displayName || 'Unassigned';\n    const dueDate = issue.fields?.duedate || 'No Due Date';\n    return `• [${key}] ${summary} _(Assignee: ${assignee})_ — ⏰ **Due:** ${dueDate}`;\n  };\n\n  const mentionFormatter = (item) => {\n    const issue = item.json;\n    const key = issue.key || 'NO-KEY';\n    const summary = issue.fields?.summary || 'No Summary';\n    const updated = issue.fields?.updated || new Date().toISOString();\n    const updatedTime = new Date(updated)\n      .toLocaleString('en-GB', {\n        day: '2-digit',\n        month: '2-digit',\n        hour: '2-digit',\n        minute: '2-digit'\n      });\n    return `• [${key}] ${summary} _(Last updated: ${updatedTime})_`;\n  };\n\n  // Build digest sections\n  digestMessage += formatSection(\"🔵 **Your Open Tasks**\", myIssues, myFormatter);\n  digestMessage += formatSection(\"🔴 **Overdue Team Tasks**\", overdueIssues, overdueFormatter);\n  digestMessage += formatSection(\"💬 **Needs Your Review**\", mentionIssues, mentionFormatter);\n\n  // Handle empty case\n  const totalIssues = myIssues.length + overdueIssues.length + mentionIssues.length;\n  if (totalIssues === 0) {\n    digestMessage += \"✅ **No action items for you today!**\\n\\n\";\n    digestMessage += \"🎉 *Enjoy a worry-free day!* \\n\\n\";\n  }\n\n  // Footer with stats\n  digestMessage += \"---\\n\";\n  digestMessage += `📊 **Summary:** ${totalIssues} tasks\\n`;\n  digestMessage += `🔹 Yours: ${myIssues.length} | `;\n  digestMessage += `🔹 Overdue: ${overdueIssues.length} | `;\n  digestMessage += `🔹 Review: ${mentionIssues.length}\\n\\n`;\n  digestMessage += \"🤖 _Automatically generated by BOT - JIRA_DailyDigest v1.1_\";\n\n  // Return result\n  return [{\n    json: {\n      hasContent: totalIssues > 0,\n      digestMessage: digestMessage,\n      totalTasks: totalIssues,\n      breakdown: {\n        myTasks: myIssues.length,\n        overdueTasks: overdueIssues.length,\n        mentionTasks: mentionIssues.length\n      },\n      timestamp: new Date().toISOString()\n    }\n  }];\n} catch (error) {\n  console.error('Digest formatting error:', error);\n  return [{\n    json: {\n      hasContent: false,\n      digestMessage:\n        \"❌ **Daily Digest Generation Failed**\\n\\nPlease check your workflow configuration.\\n\\n🤖 _Error: \" + error.message + \"_\",\n      totalTasks: 0,\n      error: error.message\n    }\n  }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        256
+      ],
+      "id": "a507a83a-386d-4a2f-b3a6-11fe7214deba",
+      "name": "TRANSFORM_Code_FormatDigest"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1c51344c-9fd4-4080-ac58-a1d31107e852",
+              "leftValue": "={{ $json.hasContent }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        256
+      ],
+      "id": "535b8464-0ffd-4f81-8881-453d1f7b60e4",
+      "name": "IF_Check_HasDigest",
+      "notes": "$json.hasContent comes from the previous Code node and is a boolean indicating whether there are any issues to report."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://soxesch.webhook.office.com/webhookb2/73e7b54a-62e6-48d9-9d94-d67485c65f95@8a0574d9-5f21-4779-a076-b4818eb23b70/IncomingWebhook/2bb0d50a3772484fa8e46b5b0a46ee84/34d0a5f9-a3e2-49ad-86f0-c8509e0ebf7f/V2l6vuRHyxuye66P6_f4c_Adwsq07ePoY6FqF673keMY41",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.rawBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1504,
+        112
+      ],
+      "id": "a6c0924a-1d4b-4326-bb06-e52422e06dcd",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "content": "## Purpose\nSend daily Jira digest via Teams webhook at 8:00 AM Mon–Fri.\n\n## Triggers\nSchedule Trigger: 0 8 * * 1-5 (Asia/Ho_Chi_Minh)\n\n## Steps\n1. GET_Jira_MyOpenIssues\n2. GET_Jira_TeamOverdue\n3. GET_Jira_MentionsReviews\n4. TRANSFORM_Code_FormatDigest\n5. BUILD_Teams_Payload\n6. SEND_Teams_Webhook\n7. ERROR_JiraDigest → NOTIFY_Admin\n\n## Credentials\n- Jira: Jira_Credential\n- Teams: Teams_Webhook_Credential\n\n## Maintenance\n- Rotate API tokens quarterly\n- Review JQL queries monthly\n- Test error handling bi-weekly\n",
+        "height": 672,
+        "width": 464
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        32
+      ],
+      "id": "725f321a-c28c-40a5-83ab-910d29ccc856",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bb345da3-3ab4-4ab0-8e67-738e404de6ee",
+              "name": "Max Results",
+              "value": "50",
+              "type": "string"
+            },
+            {
+              "id": "43f62e12-ced4-4ae2-90a4-9e4cae03fa78",
+              "name": "JiraUserAccountId\t",
+              "value": "557058:e76f7e4c-ddf1-4a33-bddd-aa9940b66e61",
+              "type": "string"
+            },
+            {
+              "id": "e45dda83-7783-4a69-a6e0-b0f4303f2d2e",
+              "name": "ProjectKeys",
+              "value": "( TUS, TUSMT, SBM, GRSAR, BSA, REFCO,\"BBT Photo App\",\"Glencore\", \"James' Management Hub\"  )",
+              "type": "string"
+            },
+            {
+              "id": "59940dcd-22d3-437c-b579-7c53fc5437f3",
+              "name": "WebhookTeamUrl",
+              "value": "https://soxesch.webhook.office.com/webhookb2/73e7b54a-62e6-48d9-9d94-d67485c65f95@8a0574d9-5f21-4779-a076-b4818eb23b70/IncomingWebhook/f5d9fff05e4f4568a5e17107ab55a419/34d0a5f9-a3e2-49ad-86f0-c8509e0ebf7f/V2jC3MOx8Mvy7IF\t",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        256
+      ],
+      "id": "82cb4a2e-c6ac-458f-bd77-3681be339a5b",
+      "name": "SET_Jira_MaxResults"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access the formatted digest from previous node\nconst message = $json.digestMessage;\n\n// Format today's date as DD/MM/YYYY\nconst today = new Date();\nconst day = String(today.getDate()).padStart(2, '0');\nconst month = String(today.getMonth() + 1).padStart(2, '0');\nconst year = today.getFullYear();\nconst formattedDate = `${day}/${month}/${year}`;\n\n// Build the payload object\nconst payload = {\n  \"@type\": \"MessageCard\",\n  \"@context\": \"https://schema.org/extensions\",\n  summary: \"Jira Daily Digest\",\n  themeColor: \"0078D7\",\n  title: `📋 JIRA DAILY DIGEST - ${formattedDate}`,\n  sections: [\n    { text: message.split(\"\\n\").join(\"<br/>\") }\n  ]\n};\n\nconst breakdown =  $input.first().json.breakdown;\n// Return JSON string for HTTP Request\nreturn [\n  {\n    json: {\n      rawBody: JSON.stringify(payload),\n     rawData: {\n        myTasks: breakdown.myTasks,\n       overdueTasks : breakdown.overdueTasks,\n       mentionTasks: breakdown.mentionTasks,\n        timestamp:$input.first().json.timestamp,\n      }\n    },\n   \n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        256
+      ],
+      "id": "4890d337-d603-4c04-8f92-3e0991895f31",
+      "name": "BUILD_Generic_Teams_Payload"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1w_dCwIZ-_M59TzCs-7j5sjH5qoDjt_kfA654v1URRic",
+          "mode": "list",
+          "cachedResultName": "Jira Digest Metrics",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w_dCwIZ-_M59TzCs-7j5sjH5qoDjt_kfA654v1URRic/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Metrics",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w_dCwIZ-_M59TzCs-7j5sjH5qoDjt_kfA654v1URRic/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $json.rawData.timestamp }}",
+            "OverdueCount": "={{ $json.rawData.overdueTasks }}",
+            "MentionCount": "={{ $json.rawData.mentionTasks }}",
+            "AssignedCount": "={{ $json.rawData.myTasks }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AssignedCount",
+              "displayName": "AssignedCount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "OverdueCount",
+              "displayName": "OverdueCount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "MentionCount",
+              "displayName": "MentionCount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2176,
+        336
+      ],
+      "id": "010b066d-3b36-47f6-8b28-08332fb7ef1b",
+      "name": "GS_Append_Metrics ",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "qEt7TWotSZ0URglf",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1w_dCwIZ-_M59TzCs-7j5sjH5qoDjt_kfA654v1URRic",
+          "mode": "list",
+          "cachedResultName": "Jira Digest Metrics",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w_dCwIZ-_M59TzCs-7j5sjH5qoDjt_kfA654v1URRic/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Metrics",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w_dCwIZ-_M59TzCs-7j5sjH5qoDjt_kfA654v1URRic/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1504,
+        400
+      ],
+      "id": "017c9a76-9956-4612-adbd-4047ca808c47",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "qEt7TWotSZ0URglf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fd6dfe8d-67c4-4708-a161-f7cb5f26ce08",
+              "leftValue": "={{ $moment($json.Timestamp).format('DD/MM/YYYY HH:mm:ss') }}\n",
+              "rightValue": "={{ $now.format(\"YYYY-MM-DD HH:mm:ss\") }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1728,
+        400
+      ],
+      "id": "98fc4b22-4e62-4ba5-a99e-e17b56ad7732",
+      "name": "IF_PreventDuplicate"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1952,
+        336
+      ],
+      "id": "40214fb3-9212-479b-a52c-d955b6866b01",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        608,
+        240
+      ],
+      "id": "f96966cb-236c-4916-8c1d-5c4cabd6ba7a",
+      "name": "MERGE_Data_AllJiraResults1"
+    }
+  ],
+  "connections": {
+    "GET_Jira_MyOpenIssues": {
+      "main": [
+        [
+          {
+            "node": "MERGE_Data_AllJiraResults1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET_Jira_TeamOverdue": {
+      "main": [
+        [
+          {
+            "node": "MERGE_Data_AllJiraResults1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "GET_Jira_MentionsReviews": {
+      "main": [
+        [
+          {
+            "node": "MERGE_Data_AllJiraResults1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "TRANSFORM_Code_FormatDigest": {
+      "main": [
+        [
+          {
+            "node": "IF_Check_HasDigest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF_Check_HasDigest": {
+      "main": [
+        [
+          {
+            "node": "BUILD_Generic_Teams_Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET_Jira_MaxResults": {
+      "main": [
+        [
+          {
+            "node": "GET_Jira_MyOpenIssues",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET_Jira_MentionsReviews",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET_Jira_TeamOverdue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TRIGGER_Schedule_DailyDigest": {
+      "main": [
+        [
+          {
+            "node": "SET_Jira_MaxResults",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BUILD_Generic_Teams_Payload": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "IF_PreventDuplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF_PreventDuplicate": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "GS_Append_Metrics ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MERGE_Data_AllJiraResults1": {
+      "main": [
+        [
+          {
+            "node": "TRANSFORM_Code_FormatDigest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:TRIGGER_Schedule_DailyDigest": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "020e5b68-9e07-4a0b-ae24-d2acb90f55c7",
+  "triggerCount": 1,
+  "shared": [
+    {
+      "createdAt": "2025-09-14T06:26:43.498Z",
+      "updatedAt": "2025-09-14T06:26:43.498Z",
+      "role": "workflow:owner",
+      "workflowId": "TpkHechdPUuHi8Co",
+      "projectId": "9I0qukrB9koLQXrY"
+    }
+  ],
+  "tags": [
+    {
+      "createdAt": "2025-09-14T06:26:47.062Z",
+      "updatedAt": "2025-09-14T06:26:47.062Z",
+      "id": "XCHO3ooBIiWt15wq",
+      "name": "Jira"
+    },
+    {
+      "createdAt": "2025-09-14T06:26:58.274Z",
+      "updatedAt": "2025-09-14T06:26:58.274Z",
+      "id": "SmczZPbCbRMnqdSg",
+      "name": "tasks_tracking"
+    }
+  ]
+}

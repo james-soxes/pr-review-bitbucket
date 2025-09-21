@@ -1,0 +1,210 @@
+{
+  "createdAt": "2025-09-20T15:24:27.290Z",
+  "updatedAt": "2025-09-21T07:09:00.653Z",
+  "id": "RijpYfQk5ngFJNpN",
+  "name": "sub-Create-Confluence-Page",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://soxesch.webhook.office.com/webhookb2/73e7b54a-62e6-48d9-9d94-d67485c65f95@8a0574d9-5f21-4779-a076-b4818eb23b70/IncomingWebhook/05a59d859995452393b0f12a87e27189/34d0a5f9-a3e2-49ad-86f0-c8509e0ebf7f/V2oXe_4uI5yLDYaXGnVtsurOXAusmIAhrFbC75CCpxWfs1",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        64
+      ],
+      "id": "cf386449-eac8-4db8-9a28-642286e0826b",
+      "name": "[NOTIFY] - Send to MS Teams"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// ===== REFACTORED N8N CODE NODE - CONFLUENCE PAGE CREATOR =====\n\n/**\n * XML/HTML Entity Escaping Utility\n * Sanitizes text content to prevent XML parsing errors in Confluence\n */\nfunction escapeXml(unsafe) {\n  if (typeof unsafe !== 'string' || !unsafe) {\n    return unsafe;\n  }\n  \n  const escapeMap = {\n    '<': '&lt;',\n    '>': '&gt;',\n    '&': '&amp;',\n    \"'\": '&apos;',\n    '\"': '&quot;'\n  };\n  \n  return unsafe.replace(/[<>&'\"]/g, char => escapeMap[char]);\n}\n\n/**\n * Text Formatting Utility\n * Converts line breaks to HTML <br/> tags for Confluence display\n */\nfunction formatTextForConfluence(text) {\n  if (!text) return '';\n  return escapeXml(text.toString()).replace(/\\n/g, '<br />');\n}\n\n/**\n * Configuration Section\n * Update these values according to your Confluence setup\n */\nconst CONFIG = {\n  SPACE_KEY: $input.first().json.spaceKey,          // Your Confluence space key\n  PARENT_PAGE_ID:  $input.first().json.parentId,// Parent page ID where new page will be created\n  PAGE_TITLE_PREFIX: \"[Estimation] - \"\n};\n\ntry {\n    // ===== Extract data with default fallback =====\n\n    const summary = $input.first().json.summary || 'No summary available';\n\n  const priority = $input.first().json.priority || 'Not specified';\n\n  const taskBreakdown = $input.first().json.taskBreakdown || 'No breakdown provided';\n\n  const originalSender = $input.first().json.originalSender || 'Unknown sender';\n\n  const cleanBody = $input.first().json.cleanBody || 'No email content available';\n\n\n  // ===== CONTENT PROCESSING =====\n  const processedData = {\n    summary,\n    originalSender: originalSender,\n    priority,\n    taskBreakdown: formatTextForConfluence(taskBreakdown),\n    cleanBody: formatTextForConfluence(cleanBody),\n    pageTitle: `${CONFIG.PAGE_TITLE_PREFIX}${summary}`\n  };\n  \n  // ===== CONFLUENCE PAGE CONTENT GENERATION =====\n  const pageContent = `\n    <h2>Yêu cầu Báo giá từ Email</h2>\n    <ul>\n        <li><strong>Người gửi gốc:</strong> ${processedData.originalSender}</li>\n        <li><strong>Độ ưu tiên AI đề xuất:</strong> ${processedData.priority}</li>\n    </ul>\n    <hr />\n    \n    <h2>Tóm tắt của AI</h2>\n    <p>${processedData.summary}</p>\n    <hr />\n    \n    <h2>Phân tích &amp; Bóc tách Công việc (AI Đề xuất)</h2>\n    <ac:structured-macro ac:name=\"panel\">\n        <ac:parameter ac:name=\"title\">Task Breakdown by AI</ac:parameter>\n        <ac:rich-text-body>\n            <p><em>Ghi chú: Đây là các hạng mục do AI phân tích tự động, cần được review và chỉnh sửa bởi con người.</em></p>\n            <p>${processedData.taskBreakdown}</p>\n        </ac:rich-text-body>\n    </ac:structured-macro>\n    <hr />\n    \n    <h2>Nội dung Email gốc (Đã làm sạch)</h2>\n    <ac:structured-macro ac:name=\"panel\">\n        <ac:rich-text-body>\n            <p>${processedData.cleanBody}</p>\n        </ac:rich-text-body>\n    </ac:structured-macro>\n  `.trim();\n  \n  // ===== CONFLUENCE API PAYLOAD =====\n  const confluencePayload = {\n    type: \"page\",\n    title: processedData.pageTitle,\n    space: {\n      key: CONFIG.SPACE_KEY\n    },\n    ancestors: [\n      {\n        id: CONFIG.PARENT_PAGE_ID\n      }\n    ],\n    body: {\n      storage: {\n        value: pageContent,\n        representation: \"storage\"\n      }\n    }\n  };\n  \n  // ===== RETURN FORMATTED FOR N8N =====\n  return [{\n    json: {\n      ...confluencePayload\n    }\n  }];\n  \n} catch (error) {\n  // Error handling - return error information for debugging\n  return [{\n    json: {\n      error: true,\n      message: error.message,\n      timestamp: new Date().toISOString(),\n      // Return a fallback payload if possible\n      fallbackPayload: {\n        type: \"page\",\n        title: `${CONFIG.PAGE_TITLE_PREFIX}Error in Processing`,\n        space: { key: CONFIG.SPACE_KEY },\n        body: {\n          storage: {\n            value: `<p><strong>Error:</strong> ${escapeXml(error.message)}</p>`,\n            representation: \"storage\"\n          }\n        }\n      }\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        112
+      ],
+      "id": "1715fb51-ccb0-4cac-9e58-1edd52fe999e",
+      "name": "[PARSE] - JSON for Create Confluence From Email"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Configuration\nconst CONFIG = {\n  themeColor: '0076D7', // Microsoft blue\n  defaultSender: 'Unknown Sender',\n  defaultTitle: 'Không có tiêu đề'\n};\n\n/**\n * Creates a Microsoft Teams message card for Confluence page creation\n * @param {Object} confluenceNode - Confluence page data\n * @param {Object} aiParseNode - Parsed AI data\n * @returns {Object} Formatted message card for Microsoft Teams\n */\nfunction createTeamsNotification(confluenceNode, aiParseNode) {\n  // Validate required data\n  if (!confluenceNode?.title) {\n    console.error('Missing required Confluence page data');\n    return createErrorResponse('Missing Confluence page data');\n  }\n\n  const confluenceUrl = getConfluenceUrl(confluenceNode);\n  const facts = getNotificationFacts(confluenceNode, aiParseNode);\n\n  return {\n    \"@type\": \"MessageCard\",\n    \"@context\": \"http://schema.org/extensions\",\n    \"themeColor\": CONFIG.themeColor,\n    \"summary\": `New Confluence page created: ${confluenceNode.title}`,\n    \"sections\": [createNotificationSection(confluenceNode, aiParseNode, facts)],\n    \"potentialAction\": [createConfluenceAction(confluenceUrl)]\n  };\n}\n\n/**\n * Creates the main notification section\n */\nfunction createNotificationSection(confluenceNode, aiParseNode, facts) {\n  return {\n    \"activityTitle\": \"✅ Đã tạo trang Confluence thành công!\",\n    \"activitySubtitle\": `Từ email của: **${aiParseNode?.sender_name || CONFIG.defaultSender}**`,\n    \"facts\": facts,\n    \"markdown\": true\n  };\n}\n\n/**\n * Creates the OpenUri action for the Confluence link\n */\nfunction createConfluenceAction(url) {\n  return {\n    \"@type\": \"OpenUri\",\n    \"name\": \"Mở trang trên Confluence\",\n    \"targets\": [{\n      \"os\": \"default\",\n      \"uri\": url\n    }]\n  };\n}\n\n/**\n * Builds the facts section for the notification\n */\nfunction getNotificationFacts(confluenceNode, aiParseNode) {\n  const facts = [createFact(\"Tiêu đề trang:\", confluenceNode.title || CONFIG.defaultTitle)];\n\n  // Add priority if available\n  if (aiParseNode?.priority) {\n    facts.push(createFact(\"Độ ưu tiên (AI):\", aiParseNode.priority));\n  }\n\n  // Add space if available\n  if (confluenceNode.space?.name) {\n    facts.push(createFact(\"Không gian:\", confluenceNode.space.name));\n  }\n\n  return facts;\n}\n\n/**\n * Creates a fact object with consistent structure\n */\nfunction createFact(name, value) {\n  return { name, value };\n}\n\n/**\n * Constructs the Confluence URL from node data\n */\nfunction getConfluenceUrl(confluenceNode) {\n  // Handle both direct _links and the structure from sample.json\n  if (confluenceNode._links) {\n    const base = confluenceNode._links.base || '';\n    const webui = confluenceNode._links.webui || '';\n    return `${base}${webui}`;\n  }\n  // Add additional URL construction logic here if needed\n  return '';\n}\n\n/**\n * Creates a standardized error response\n */\nfunction createErrorResponse(message) {\n  return {\n    success: false,\n    error: `Failed to create notification: ${message}`,\n    timestamp: new Date().toISOString()\n  };\n}\n\n// Main execution\ntry {\n  // Get data from previous nodes\n  const confluenceNode = $('[CREATE] - Confluence Page - Estimate').first().json;\n\n  const aiParseNode  = $('When Executed by Another Workflow').first().json.aiOuput\n  return createTeamsNotification(confluenceNode, aiParseNode);\n} catch (error) {\n  console.error('Error creating Teams notification:', error);\n  return createErrorResponse(error.message);\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        64
+      ],
+      "id": "0f7d5d82-d3a8-434d-8f39-0dc7bd8658be",
+      "name": "[PARSE] - JSON Confluence - MS Team"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://soxes.atlassian.net/wiki/rest/api/content",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        32,
+        64
+      ],
+      "id": "1dc60657-596e-41a9-b3c2-8a9757f8f66d",
+      "name": "[CREATE] - Confluence Page - Estimate",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "vuqHzqXD5jQQXkbq",
+          "name": "Atlassian_Credential_soxes"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -560,
+        48
+      ],
+      "id": "39c8abb2-f58a-4cbf-a326-bf64635fe960",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "connections": {
+    "[PARSE] - JSON for Create Confluence From Email": {
+      "main": [
+        [
+          {
+            "node": "[CREATE] - Confluence Page - Estimate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[PARSE] - JSON Confluence - MS Team": {
+      "main": [
+        [
+          {
+            "node": "[NOTIFY] - Send to MS Teams",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[CREATE] - Confluence Page - Estimate": {
+      "main": [
+        [
+          {
+            "node": "[PARSE] - JSON Confluence - MS Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "[PARSE] - JSON for Create Confluence From Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "[CREATE] - Confluence Page - Estimate": [
+      {
+        "json": {
+          "id": "677020272",
+          "type": "page",
+          "ari": "ari:cloud:confluence:1ec2e273-3e12-4e85-91f7-ed2c313c75f8:page/677020272",
+          "base64EncodedAri": "YXJpOmNsb3VkOmNvbmZsdWVuY2U6MWVjMmUyNzMtM2UxMi00ZTg1LTkxZjctZWQyYzMxM2M3NWY4OmNvbnRlbnQvNjc3MDIwMjcy",
+          "status": "current",
+          "title": "[Estimation] - Email này yêu cầu đội kỹ thuật cung cấp dự toán cho dự án SBM, bao gồm tính năng đăng nhập và tích hợp dịch vụ Telebooker với hạn chót vào cuối tuần.",
+          "space": {
+            "id": 73138179,
+            "ari": "ari:cloud:confluence:1ec2e273-3e12-4e85-91f7-ed2c313c75f8:space/73138179",
+            "key": "~james",
+            "alias": "~james",
+            "name": "James Nguyen",
+            "type": "personal",
+            "status": "current",
+            "_expandable": {
+              "settings": "/rest/api/space/~james/settings",
+              "metadata": "",
+              "identifiers": "",
+              "roles": "",
+              "icon": "",
+              "typeSettings": "",
+              "description": "",
+              "history": "",
+              "operations": "",
+              "lookAndFeel": "/rest/api/settings/lookandfeel?spaceKey=~james",
+              "permissions": "",
+              "theme": "/rest/api/space/~james/theme",
+              "homepage": "/rest/api/content/73138181"
+            },
+            "_links": {
+              "webui": "/spaces/~james",
+              "self": "https://soxes.atlassian.net/wiki/rest/api/space/~james"
+            }
+          },
+          "_links": {
+            "editui": "/pages/resumedraft.action?draftId=677020272",
+            "webui": "/spaces/~james/pages/677020272/Estimation+-+Email+n+y+y+u+c+u+i+k+thu+t+cung+c+p+d+to+n+cho+d+n+SBM+bao+g+m+t+nh+n+ng+ng+nh+p+v+t+ch+h+p+d+ch+v+Telebooker+v+i+h+n+ch+t+v+o+cu+i+tu+n.",
+            "edituiv2": "/spaces/~james/pages/edit-v2/677020272",
+            "context": "/wiki",
+            "self": "https://soxes.atlassian.net/wiki/rest/api/content/677020272",
+            "tinyui": "/x/cIJaK",
+            "collection": "/rest/api/content",
+            "base": "https://soxes.atlassian.net/wiki"
+          }
+        }
+      }
+    ]
+  },
+  "versionId": "4ea001d2-7beb-4dfe-897c-2688fe80c971",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "createdAt": "2025-09-20T15:24:27.290Z",
+      "updatedAt": "2025-09-20T15:24:27.290Z",
+      "role": "workflow:owner",
+      "workflowId": "RijpYfQk5ngFJNpN",
+      "projectId": "9I0qukrB9koLQXrY"
+    }
+  ],
+  "tags": []
+}

@@ -1,0 +1,120 @@
+{
+  "createdAt": "2025-09-20T08:47:27.670Z",
+  "updatedAt": "2025-09-20T09:02:02.444Z",
+  "id": "DrLDQaf54G0ZhJpf",
+  "name": "sub-AI-Analysis-Service",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Extract input data\nconst aiOutput = $input.first().json;\nconst jsonString = aiOutput.message.content;\n\n// Configuration object for priority mapping (easier to maintain)\nconst PRIORITY_MAPPING = {\n  'Blocker': '10000',\n  'Critical': '10001',\n  'Major': '10002',\n  'Minor': '10003',\n  'Trivial': '10004',\n  'Planned only (do not start)': '10005',\n  'Medium': '10009',\n  'Low': '10010',\n  'Lowest': '10011',\n  'High': '10012',\n  'Highest': '10013'\n};\n\n// Function to map priority with default empty string\nconst mapPriority = (priority) => PRIORITY_MAPPING[priority] || '';\n\n// Main processing\ntry {\n  const dataObject = JSON.parse(jsonString);\n  \n  // Add mapped priority to the object\n  return {\n    ...dataObject,\n    mappedPriority: mapPriority(dataObject.priority)\n  };\n  \n} catch (error) {\n  // Error handling with more context\n  console.error(\"JSON parsing error:\", {\n    error: error.message,\n    stack: error.stack\n  });\n  \n  return { \n    error: \"Failed to parse AI output as JSON\",\n    details: error.message,\n    originalContent: jsonString,\n    success: false\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        192
+      ],
+      "id": "c6efdc82-1ea9-4624-a145-3ef71fd7b834",
+      "name": "[PARSE] - AI JSON Response"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=# Email Classification Prompt (Detailed Analysis)\n\nYou are an expert Vietnamese email analysis assistant. Analyze the email content and return ONLY a valid JSON object. Do not use markdown code blocks, backticks, or any formatting. Return raw JSON only.\n\n## Email Content:\n---\n**Subject:** {{ $json.subject }}\n**From:** {{ $json.sender }}\n**Body:** {{ $json.body }}\n## Detailed Classification Instructions:\n\n### 1. Summary Analysis\nCreate a comprehensive Vietnamese summary that captures:\n- Main purpose of the email\n- Key details or requirements mentioned\n- Any deadlines or time constraints\n- Target length: 1-2 sentences with specific details\n\n### 2. Category Classification (analyze content patterns carefully):\n\n**`TASK_REQUEST`**: \n- Contains action verbs: \"tạo\", \"làm\", \"cập nhật\", \"kiểm tra\", \"sửa\", \"implement\", \"develop\"\n- Has specific deliverables mentioned\n- Includes deadlines or timeline expectations\n- Direct work assignments or requests\n\n**`ESTIMATION_REQUEST`**: \n- Asks for time/effort estimates: \"báo giá\", \"estimate\", \"effort\", \"timeline\"\n- Contains detailed feature/project descriptions IN the email body\n- May include technical specifications or requirements\n- Requests planning or scoping information\n\n**`CONFLUENCE_LINK_ESTIMATE`**: \n- Primary content is a Confluence/wiki link\n- Minimal text description, mainly redirects to external documentation\n- Link patterns: confluence, wiki, notion, jira\n- Brief message asking to review linked content for estimation\n\n**`POLICY_UPDATE`**: \n- From official platform accounts (Apple, Google, Meta, Microsoft)\n- Sender patterns: noreply@, notifications@, developer@\n- Content about policy changes, terms updates, platform announcements\n- Formal, template-based language\n\n**`SPAM_MARKETING`**: \n- Promotional content with sales language\n- Unknown or business senders\n- Call-to-action buttons: \"Buy now\", \"Sign up\", \"Learn more\"\n- Unsolicited advertising content\n\n**`OTHER`**: \n- General communication, status updates, meeting notes\n- Social messages, team announcements\n- Information sharing without specific requests\n\n### 3. Priority Assessment (consider urgency indicators):\n\n**High Priority Indicators:**\n- Words: \"urgent\", \"ASAP\", \"critical\", \"emergency\", \"gấp\"\n- Deadlines within 24 hours\n- From C-level executives or direct managers\n- Production issues or critical bugs\n\n**Medium Priority Indicators:**\n- Deadlines within current week\n- Project-related requests\n- Estimation requests for planning\n- Regular work assignments\n\n**Low Priority Indicators:**\n- No specific deadlines\n- Informational content\n- Marketing emails\n- Optional reviews or feedback\n\n### 4. Task Breakdown (detailed for ESTIMATION_REQUEST only):\nWhen category is `ESTIMATION_REQUEST`, break down into specific development tasks:\n- Frontend tasks: UI components, user interactions, responsive design\n- Backend tasks: API development, database changes, integrations\n- Testing tasks: unit tests, integration tests, QA scenarios\n- DevOps tasks: deployment, configuration, monitoring\n- Each task should be specific enough to estimate hours/days\n- Use format: \"- [Task type] Task description\"\n- If not ESTIMATION_REQUEST, return empty string \"\"\n\n### 5. Sender Analysis:\nExtract clean sender name by:\n- Removing email domain (@company.com)\n- Removing titles (Mr., Ms., Dr.)\n- Keeping first and last name only\n- Handle corporate senders appropriately\n\n### 6. URL Extraction:\nFor CONFLUENCE_LINK_ESTIMATE category:\n- Extract complete URLs starting with http/https\n- Focus on confluence, wiki, notion, jira links\n- Ensure URL is valid and complete\n- Return empty string \"\" for other categories\n\n## Advanced Analysis Considerations:\n- Analyze email tone and formality level\n- Consider sender relationship (internal vs external)\n- Evaluate technical complexity mentioned\n- Account for Vietnamese language nuances\n- Look for implicit urgency indicators\n\n## Output Format (raw JSON only):\n{\n  \"summary\": \"Detailed Vietnamese summary with key specifics\",\n  \"category\": \"category_name\",\n  \"priority\": \"High/Medium/Low\",\n  \"task_breakdown\": \"detailed_markdown_bullets_or_empty_string\",\n  \"sender_name\": \"clean_name_only\",\n  \"confluence_url\": \"complete_url_or_empty_string\"\n}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        496,
+        192
+      ],
+      "id": "f109f4dd-8cd1-439f-8339-a3ec9ae4c848",
+      "name": "[ANALYZE] - Email Content",
+      "credentials": {
+        "openAiApi": {
+          "id": "rvEVzeazfzW6v66O",
+          "name": "OPEN_AI__Credential_tiennguyen15"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        208
+      ],
+      "id": "ced7f908-86e3-40f9-9067-2b790db2d41b",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "connections": {
+    "[ANALYZE] - Email Content": {
+      "main": [
+        [
+          {
+            "node": "[PARSE] - AI JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "[ANALYZE] - Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "subject": "Subject: FW: AI-Powered Defense: The Breakthrough Every CISO Needs to See",
+          "sender": null,
+          "body": null
+        }
+      }
+    ]
+  },
+  "versionId": "7ff9cb4c-eb85-4af8-9fc9-a84b85a024cc",
+  "triggerCount": 0,
+  "shared": [
+    {
+      "createdAt": "2025-09-20T08:47:27.670Z",
+      "updatedAt": "2025-09-20T08:47:27.670Z",
+      "role": "workflow:owner",
+      "workflowId": "DrLDQaf54G0ZhJpf",
+      "projectId": "9I0qukrB9koLQXrY"
+    }
+  ],
+  "tags": []
+}
