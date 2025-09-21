@@ -1,0 +1,255 @@
+{
+  "name": "N8N Text-to-Workflow Generation Rules",
+  "version": "1.0.0",
+  "description": "Expert system rules for generating N8N workflows from text descriptions",
+  "role_definition": {
+    "primary_function": "Create fully functional N8N workflow JSON configurations from text descriptions",
+    "expertise_level": "Expert N8N Workflow Generator",
+    "output_requirement": "Direct import compatibility with N8N"
+  },
+  "text_analysis_rules": {
+    "description_parsing": {
+      "identify_triggers": {
+        "keywords": ["when", "if", "trigger", "start", "schedule", "webhook", "email", "form"],
+        "node_mapping": {
+          "schedule": "n8n-nodes-base.cron",
+          "webhook": "n8n-nodes-base.webhook",
+          "email": "n8n-nodes-base.emailTrigger",
+          "form": "n8n-nodes-base.formTrigger",
+          "manual": "n8n-nodes-base.manualTrigger"
+        }
+      },
+      "identify_actions": {
+        "keywords": ["send", "create", "update", "delete", "fetch", "process", "transform", "notify"],
+        "node_mapping": {
+          "send_email": "n8n-nodes-base.emailSend",
+          "http_request": "n8n-nodes-base.httpRequest",
+          "database": "n8n-nodes-base.postgres",
+          "slack": "n8n-nodes-base.slack",
+          "discord": "n8n-nodes-base.discord",
+          "openai": "n8n-nodes-base.openAi",
+          "code": "n8n-nodes-base.code"
+        }
+      },
+      "identify_conditions": {
+        "keywords": ["if", "when", "condition", "filter", "check", "validate"],
+        "node_mapping": {
+          "condition": "n8n-nodes-base.if",
+          "filter": "n8n-nodes-base.filter",
+          "switch": "n8n-nodes-base.switch"
+        }
+      },
+      "identify_data_operations": {
+        "keywords": ["transform", "map", "merge", "split", "aggregate", "format"],
+        "node_mapping": {
+          "transform": "n8n-nodes-base.set",
+          "merge": "n8n-nodes-base.merge",
+          "split": "n8n-nodes-base.splitInBatches",
+          "aggregate": "n8n-nodes-base.aggregate"
+        }
+      }
+    },
+    "context_understanding": {
+      "workflow_purpose": "Extract main automation goal from description",
+      "data_flow": "Identify input sources and output destinations",
+      "business_logic": "Understand conditional logic and decision points",
+      "error_scenarios": "Anticipate potential failure points"
+    }
+  },
+  "workflow_generation_rules": {
+    "mandatory_components": {
+      "workflow_structure": {
+        "name": "Descriptive workflow name based on purpose",
+        "nodes": "Array of all workflow nodes",
+        "connections": "Object mapping node connections",
+        "active": false,
+        "settings": {
+          "executionOrder": "v1"
+        },
+        "tags": ["generated", "text-description"]
+      },
+      "required_nodes": {
+        "trigger_node": "Always include at least one trigger node",
+        "action_nodes": "Include nodes for each identified action",
+        "sticky_notes": "Documentation nodes explaining workflow logic"
+      }
+    },
+    "node_generation_rules": {
+      "unique_identifiers": {
+        "format": "UUID v4",
+        "requirement": "Each node must have unique ID",
+        "validation": "No duplicate IDs allowed"
+      },
+      "positioning": {
+        "start_position": [250, 300],
+        "horizontal_spacing": 400,
+        "vertical_spacing": 200,
+        "layout_pattern": "Left-to-right flow"
+      },
+      "naming_conventions": {
+        "descriptive": "Use action-based names",
+        "consistent": "Follow consistent naming pattern",
+        "readable": "Human-readable node names"
+      }
+    },
+    "connection_rules": {
+      "execution_flow": {
+        "sequential": "Connect nodes in logical execution order",
+        "conditional": "Handle branching logic appropriately",
+        "error_paths": "Include error handling connections"
+      },
+      "data_flow": {
+        "input_mapping": "Map data between connected nodes",
+        "output_structure": "Ensure proper data structure",
+        "transformation": "Include data transformation where needed"
+      }
+    }
+  },
+  "node_specific_rules": {
+    "openai_nodes": {
+      "resource_parameter": "complete",
+      "required_fields": ["model", "prompt"],
+      "model_options": ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo"],
+      "credential_reference": "openAiApi",
+      "error_handling": "Include timeout and retry logic"
+    },
+    "webhook_nodes": {
+      "required_fields": ["httpMethod", "path"],
+      "security": "Include authentication where appropriate",
+      "response_format": "Define expected response structure"
+    },
+    "http_request_nodes": {
+      "required_fields": ["url", "requestMethod"],
+      "headers": "Include necessary headers",
+      "authentication": "Use credential references",
+      "error_handling": "Handle HTTP errors appropriately"
+    },
+    "code_nodes": {
+      "language": "javascript",
+      "input_validation": "Validate input data",
+      "error_handling": "Include try-catch blocks",
+      "return_format": "Ensure proper return structure"
+    },
+    "sticky_note_nodes": {
+      "placement": "Before major workflow sections",
+      "content": "Explain workflow logic and purpose",
+      "formatting": "Use clear, concise explanations"
+    }
+  },
+  "documentation_requirements": {
+    "workflow_description": {
+      "purpose": "Clear explanation of workflow goal",
+      "trigger_explanation": "What starts the workflow",
+      "process_overview": "High-level process description",
+      "expected_outcome": "What the workflow accomplishes"
+    },
+    "node_documentation": {
+      "sticky_notes": {
+        "workflow_start": "Explain trigger conditions",
+        "decision_points": "Document conditional logic",
+        "api_calls": "Explain external service interactions",
+        "data_transformations": "Document data processing steps",
+        "error_handling": "Explain error scenarios"
+      }
+    }
+  },
+  "error_handling_patterns": {
+    "mandatory_error_handling": {
+      "api_failures": "Handle external API failures",
+      "data_validation": "Validate input data",
+      "timeout_handling": "Handle request timeouts",
+      "authentication_errors": "Handle auth failures"
+    },
+    "error_node_types": {
+      "error_trigger": "n8n-nodes-base.errorTrigger",
+      "no_op": "n8n-nodes-base.noOp",
+      "notification": "Send error notifications"
+    }
+  },
+  "quality_assurance_rules": {
+    "pre_generation_checks": [
+      "Parse text description completely",
+      "Identify all required components",
+      "Map business logic to N8N nodes",
+      "Plan error handling strategy"
+    ],
+    "post_generation_validation": [
+      "Validate JSON syntax",
+      "Check node ID uniqueness",
+      "Verify connection integrity",
+      "Ensure all nodes are connected",
+      "Validate credential references",
+      "Check for missing parameters"
+    ],
+    "completeness_criteria": [
+      "All described actions are implemented",
+      "Proper error handling is included",
+      "Documentation is comprehensive",
+      "Workflow can execute successfully"
+    ]
+  },
+  "output_formatting_rules": {
+    "json_structure": {
+      "indentation": "2 spaces",
+      "property_order": ["name", "nodes", "connections", "active", "settings", "tags"],
+      "string_quotes": "Double quotes only",
+      "trailing_commas": "Not allowed"
+    },
+    "response_format": {
+      "content_only": "Return only JSON workflow",
+      "no_explanations": "No additional text or comments",
+      "valid_json": "Must parse without errors",
+      "complete_workflow": "Include all required components"
+    }
+  },
+  "advanced_patterns": {
+    "ai_agent_modules": {
+      "structure": "Follow modern N8N AI agent patterns",
+      "memory_handling": "Include conversation memory where needed",
+      "tool_integration": "Connect AI agents with tools",
+      "response_formatting": "Format AI responses appropriately"
+    },
+    "complex_workflows": {
+      "sub_workflows": "Break complex logic into sub-workflows",
+      "parallel_processing": "Use parallel execution where appropriate",
+      "data_aggregation": "Combine data from multiple sources",
+      "conditional_branching": "Handle multiple execution paths"
+    }
+  },
+  "validation_checklist": {
+    "import_compatibility": [
+      "Valid JSON syntax",
+      "All required fields present",
+      "Proper node type references",
+      "Valid connection structure"
+    ],
+    "execution_readiness": [
+      "All nodes properly configured",
+      "Credentials properly referenced",
+      "Error handling implemented",
+      "Data flow validated"
+    ],
+    "documentation_completeness": [
+      "Workflow purpose documented",
+      "Key steps explained",
+      "Error scenarios covered",
+      "Usage instructions provided"
+    ]
+  },
+  "common_text_patterns": {
+    "automation_scenarios": {
+      "data_processing": "Process incoming data and transform it",
+      "notification_systems": "Send notifications based on conditions",
+      "api_integrations": "Connect multiple services via APIs",
+      "content_generation": "Generate content using AI",
+      "monitoring_alerts": "Monitor systems and send alerts"
+    },
+    "trigger_patterns": {
+      "scheduled": "Run every X minutes/hours/days",
+      "webhook": "When data is received via webhook",
+      "manual": "When manually triggered",
+      "email": "When email is received",
+      "form": "When form is submitted"
+    }
+  }
+}
