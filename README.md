@@ -1,47 +1,89 @@
-# N8N Automation Suite
+# 🤖 N8N AI Email Automation Suite
 
 ![N8N Version](https://img.shields.io/badge/n8n-1.x-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-active-brightgreen)
+![Status](https://img.shields.io/badge/status-production-brightgreen)
+![AI Powered](https://img.shields.io/badge/AI-GPT--4-orange)
 
-A comprehensive, enterprise-ready collection of N8N workflows, components, and automation tools for streamlining business processes.
+Bộ công cụ tự động hóa email thông minh sử dụng n8n và AI để xử lý, phân loại và thực hiện các hành động phù hợp dựa trên nội dung email.
 
-## 🚀 Features
+## 📋 Tổng quan
 
-- **🔍 Email Triage Assistant**: AI-powered email processing and intelligent categorization
-- **📄 Confluence Integration**: Automated page creation with Vietnamese language support
-- **💬 Teams Notifications**: Rich, actionable notifications with deep linking
-- **🤖 AI-Powered Analysis**: Intelligent content processing and automated task breakdown
-- **🧩 Modular Components**: Reusable workflow components for rapid development
-- **🛡️ Enterprise Security**: Comprehensive error handling and data validation
+Project này sử dụng **n8n workflow automation** kết hợp với **OpenAI GPT-4** để tạo ra hệ thống xử lý email thông minh, tự động phân loại và thực hiện các hành động phù hợp như tạo Jira tasks, Confluence pages, hoặc gửi notifications.
+
+## 🏗️ Kiến trúc Hệ thống
+
+```mermaid
+graph TB
+    A[📧 Gmail Trigger<br/>Every hour at :15] --> B[📝 Convert HTML to Markdown]
+    B --> C[🔍 Extract Original Email]
+    C --> D[🧠 AI Analysis Service<br/>GPT-4o Classification]
+    
+    D --> E{🔀 Email Category Router}
+    
+    E -->|TASK_REQUEST| F[📋 Create Jira Task]
+    E -->|ESTIMATION_REQUEST| G[📄 Create Confluence Page]
+    E -->|CONFLUENCE_LINK_ESTIMATE| H[🔗 Analyze Confluence Content]
+    E -->|POLICY_UPDATE| I[🚨 Send MS Teams Alert]
+    E -->|SPAM_MARKETING| J[🗑️ Move to Spam]
+    E -->|OTHER| K[📝 Mark as Read]
+    
+    F --> L[✅ Mark Email Read]
+    G --> L
+    H --> M[📊 Create Analysis Page] --> L
+    I --> L
+    J --> L
+    K --> L
+    
+    N[⚡ Global Error Handler<br/>MS Teams Notifications] -.-> D
+    N -.-> F
+    N -.-> G
+    N -.-> H
+    
+    style D fill:#e1f5fe
+    style E fill:#fff3e0
+    style N fill:#fce4ec
+```
+
+## 🚀 Tính năng chính
+
+### 🎯 Phân loại Email Thông minh
+- **AI-Powered Classification**: Sử dụng GPT-4o để phân tích nội dung email
+- **6 Categories**: TASK_REQUEST, ESTIMATION_REQUEST, CONFLUENCE_LINK_ESTIMATE, POLICY_UPDATE, SPAM_MARKETING, OTHER
+- **Priority Detection**: Tự động xác định mức độ ưu tiên (High/Medium/Low)
+
+### 🔄 Workflow Automation
+- **Modular Architecture**: Sub-workflow pattern để tái sử dụng
+- **Error Resilience**: Retry logic và error handling toàn diện
+- **Multiple Integrations**: Gmail, Jira, Confluence, MS Teams
+
+### 📊 Xử lý Đa dạng
+- **Jira Task Creation**: Tự động tạo task từ email yêu cầu công việc
+- **Confluence Documentation**: Generate estimation pages với AI breakdown
+- **Link Analysis**: Phân tích nội dung Confluence để estimate project
+- **Smart Notifications**: MS Teams alerts cho policy updates
 
 ## 📁 Project Structure
 
 ```
 n8n-automation-suite/
-├── 📂 workflows/
-│   ├── 🧩 components/          # Reusable workflow components
-│   │   ├── sub-Create-Confluence-Page.json
-│   │   └── README.md
-│   └── 📋 templates/           # Complete workflow templates
-│       └── .gitkeep
-├── 📂 lib/                     # Code libraries and utilities
-│   └── refactored-confluence-page-creator.js
+├── 🚀 workflows/
+│   ├── main-workflows/        # Primary workflows với triggers
+│   │   └── ai-email-triage-assistant.json
+│   ├── ⚙️ sub-workflows/       # Reusable service workflows  
+│   │   ├── ai-analysis-service.json
+│   │   ├── create-confluence-page.json
+│   │   ├── create-jira-task.json
+│   │   └── send-ms-teams-message.json
+│   ├── 🛠️ system/             # Infrastructure workflows
+│   │   └── global-error-handler.json
+│   └── 📋 archived/           # Deprecated workflows
+├── 📚 docs/                   # Documentation
+│   └── testing-guide-ai-email-triage.md
+├── 🧪 tests/                  # Test cases và examples
 ├── 📂 config/                  # Configuration files
-│   ├── winsurf.config.js
-│   ├── text-to-workflow.config.js
-│   ├── winsurf-n8n-rules.json
-│   └── text-to-workflow-rules.json
-├── 📂 documentation/           # Project documentation
-│   ├── WARP.md
-│   └── .gitkeep
-├── 📂 assets/                  # Static assets and resources
-│   └── n8n_cheatsheet.html
-├── 📂 examples/                # Usage examples and demos
-├── 📂 scripts/                 # Utility and deployment scripts
-├── 📂 src/                     # Source code (future development)
-├── 📄 package.json             # Project metadata and dependencies
-├── 📄 README.md                # This file
+├── 📄 package.json             # Project metadata
+├── 📖 README.md                # This file
 ├── 📄 .gitignore               # Git ignore patterns
 └── 📄 LICENSE                  # MIT License
 ```
