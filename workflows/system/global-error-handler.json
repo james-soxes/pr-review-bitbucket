@@ -1,6 +1,6 @@
 {
   "createdAt": "2025-09-21T12:28:21.861Z",
-  "updatedAt": "2025-09-21T13:04:22.555Z",
+  "updatedAt": "2025-09-21T13:51:25.009Z",
   "id": "DbzKrYofpCNCrr50",
   "name": "[System] - Global Error Handler",
   "active": false,
@@ -33,7 +33,10 @@
         0
       ],
       "id": "43cf8232-2ec1-4e81-9b04-4f91307749e2",
-      "name": "AI Agent"
+        "name": "AI Agent",
+        "retryOnFail": true,
+        "maxTries": 2,
+        "waitBetweenTries": 5000
     },
     {
       "parameters": {
