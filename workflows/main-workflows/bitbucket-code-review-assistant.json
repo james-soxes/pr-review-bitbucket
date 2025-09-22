@@ -274,6 +274,7 @@
     },
     {
       "parameters": {
+        "prompt": "={{ $json.aiPrompt }}",
         "options": {
           "systemMessage": "Bạn là một senior software developer với kinh nghiệm review code. Hãy phân tích code changes một cách chính xác và tóm tắt ngắn gọn, tập trung vào business impact và technical changes quan trọng."
         }
