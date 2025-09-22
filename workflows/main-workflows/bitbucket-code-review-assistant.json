@@ -307,24 +307,9 @@
         "url": "=https://api.bitbucket.org/2.0/repositories/{{ $('extract-pr-info').item(0).json.repository.fullName }}/pullrequests/{{ $('extract-pr-info').item(0).json.id }}/comments",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "bitbucketApi",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "content",
-              "value": "={{ $json.formattedComment }}"
-            }
-          ]
-        }
+        "contentType": "json",
+        "body": "={\n  \"content\": {\n    \"raw\": {{ JSON.stringify($json.formattedComment) }}\n  }\n}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -347,24 +332,9 @@
         "url": "=https://api.bitbucket.org/2.0/repositories/{{ $json.prInfo.repository.fullName }}/pullrequests/{{ $json.prInfo.id }}/comments",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "bitbucketApi",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "content",
-              "value": "={{ $json.warningComment }}"
-            }
-          ]
-        }
+        "contentType": "json",
+        "body": "={\n  \"content\": {\n    \"raw\": {{ JSON.stringify($json.warningComment) }}\n  }\n}"
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
