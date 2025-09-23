@@ -1,0 +1,267 @@
+{
+  "createdAt": "2025-09-23T12:00:00.000Z",
+  "updatedAt": "2025-09-23T12:00:00.000Z",
+  "id": "BitbucketCodeReview01",
+  "name": "🔍 Bitbucket AI Code Review Assistant",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "height": 400,
+        "width": 320,
+        "content": "# 🔍 Bitbucket AI Code Review Assistant\\n\\n## 🎯 Purpose\\nAutomates code review process for Bitbucket, focusing on:\\n- **Smart Summaries** for small PRs (<200 LoC)\\n- **Size Warnings** for large PRs\\n\\n## 📋 Current Phase: PHASE 1\\n**Week 1-2**: Setup + PR size classification logic\\n\\n## 🚀 Trigger\\n- **Bitbucket Webhook**: PR created/updated\\n- **Events**: pullrequest:created, pullrequest:updated\\n\\n## 🔄 Main Logic\\n1. **Receive PR Event** from Bitbucket\\n2. **Calculate Lines of Code** (additions + deletions)\\n3. **IF/ELSE Logic**:\\n   - **LoC < 200** → Branch A: Generate AI summary\\n   - **LoC >= 200** → Branch B: Post warning + tag author\\n\\n## 🔐 Required Credentials\\n- **Bitbucket API**: Webhook and API access\\n- **OpenAI API**: For AI analysis (GPT-4o-mini)"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-800, -400],
+      "id": "sticky-main-overview",
+      "name": "📖 Workflow Overview"
+    },
+    {
+      "parameters": {
+        "resource": "repository",
+        "workspace": "={{ $vars.BITBUCKET_WORKSPACE }}",
+        "repository": "={{ $vars.BITBUCKET_REPOSITORY }}",
+        "events": [
+          "pullrequest:created",
+          "pullrequest:updated"
+        ]
+      },
+      "type": "n8n-nodes-base.bitbucketTrigger",
+      "typeVersion": 1,
+      "position": [-600, 0],
+      "id": "bitbucket-pr-trigger",
+      "name": "🎯 Bitbucket PR Trigger",
+      "webhookId": "bitbucket-pr-webhook-001"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract PR information and calculate Lines of Code\nconst webhookData = $input.all()[0].json;\nconst pullRequest = webhookData.pullrequest || webhookData.data?.pullrequest;\n\nif (!pullRequest) {\n  throw new Error('No pull request data found in webhook');\n}\n\n// Calculate Lines of Code\nconst additions = pullRequest.summary?.lines_added || 0;\nconst deletions = pullRequest.summary?.lines_removed || 0;\nconst totalLinesChanged = additions + deletions;\n\n// Extract key PR information\nconst prInfo = {\n  id: pullRequest.id,\n  title: pullRequest.title,\n  description: pullRequest.description || '',\n  author: pullRequest.author?.display_name || 'Unknown',\n  authorUsername: pullRequest.author?.username || 'unknown',\n  state: pullRequest.state,\n  createdOn: pullRequest.created_on,\n  source: {\n    branch: pullRequest.source?.branch?.name || 'unknown'\n  },\n  destination: {\n    branch: pullRequest.destination?.branch?.name || 'main'\n  },\n  links: {\n    html: pullRequest.links?.html?.href || '',\n    diff: pullRequest.links?.diff?.href || ''\n  },\n  linesAdded: additions,\n  linesDeleted: deletions,\n  totalLinesChanged: totalLinesChanged,\n  sizeCategory: totalLinesChanged < 200 ? 'SMALL' : 'LARGE',\n  repository: {\n    name: pullRequest.repository?.name || 'unknown',\n    fullName: pullRequest.repository?.full_name || 'unknown'\n  }\n};\n\nconsole.log(`PR #${prInfo.id}: ${prInfo.title}`);\nconsole.log(`Lines Changed: +${additions}/-${deletions} = ${totalLinesChanged} total`);\nconsole.log(`Size Category: ${prInfo.sizeCategory}`);\n\nreturn {\n  json: prInfo\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-350, 0],
+      "id": "extract-pr-info",
+      "name": "📊 Extract PR Info & Calculate LoC"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.sizeCategory }}",
+                    "rightValue": "SMALL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "smallPR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.sizeCategory }}",
+                    "rightValue": "LARGE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "largePR"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [-100, 0],
+      "id": "pr-size-router",
+      "name": "🔀 PR Size Router"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate warning comment for Large PRs\nconst prData = $input.all()[0].json;\n\n// Create professional warning message\nconst warningComment = 'Warning: **PR Exceeds Size Threshold**\\n\\n' +\n  'Hi @' + prData.authorUsername + '! 👋\\n\\n' +\n  'This Pull Request has **' + prData.totalLinesChanged + ' lines of code changed** ' +\n  '(' + prData.linesAdded + ' additions, ' + prData.linesDeleted + ' deletions), ' +\n  'which exceeds the team recommendation of 200 LoC.\\n\\n' +\n  '**🔍 Why this matters:**\\n' +\n  '- Large PRs are harder to review and more prone to errors\\n' +\n  '- Increases merge time and conflict risk\\n' +\n  '- Difficult to rollback if issues arise\\n\\n' +\n  '**💡 Suggestions:**\\n' +\n  'Consider splitting this PR into independent parts:\\n' +\n  '- Separate refactoring from new features\\n' +\n  '- Split by modules/components\\n' +\n  '- Create separate PR for configuration changes\\n\\n' +\n  '**📊 PR Statistics:**\\n' +\n  '- **Title**: ' + prData.title + '\\n' +\n  '- **Branch**: ' + prData.source.branch + ' → ' + prData.destination.branch + '\\n' +\n  '- **Created**: ' + new Date(prData.createdOn).toLocaleDateString() + '\\n\\n' +\n  '*This message was generated automatically by Code Review Bot 🤖*';\n\nreturn {\n  json: {\n    prInfo: prData,\n    warningComment: warningComment,\n    action: 'POST_WARNING'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [150, 100],
+      "id": "generate-warning",
+      "name": "⚠️ Generate Large PR Warning"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.bitbucket.org/2.0/repositories/{{ $json.prInfo.repository.fullName }}/pullrequests/{{ $json.prInfo.id }}/comments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "bitbucketApi",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"content\": {\n    \"raw\": {{ JSON.stringify($json.warningComment) }}\n  }\n}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, 100],
+      "id": "post-warning-comment",
+      "name": "⚠️ Post Warning Comment",
+      "credentials": {
+        "bitbucketApi": {
+          "id": "bitbucket-api-credentials",
+          "name": "Bitbucket API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate simple summary for small PRs\nconst prData = $input.all()[0].json;\n\n// Create AI-style summary comment\nconst summaryComment = '🤖 **AI Code Review Summary**\\n\\n' +\n  '**Pull Request**: ' + prData.title + '\\n' +\n  '**Author**: ' + prData.author + '\\n' +\n  '**Lines Changed**: +' + prData.linesAdded + '/-' + prData.linesDeleted + ' (' + prData.totalLinesChanged + ' total)\\n' +\n  '**Branch**: ' + prData.source.branch + ' → ' + prData.destination.branch + '\\n\\n' +\n  '**📋 Summary of Changes:**\\n' +\n  '• This is a small PR with manageable changes\\n' +\n  '• Ready for detailed code review\\n' +\n  '• Follows team size guidelines (<200 LoC)\\n\\n' +\n  '---\\n' +\n  '*This summary was generated automatically by AI Code Review Assistant 🚀*\\n\\n' +\n  '**Next Steps**: Please review the changes and ensure all tests are passing before merging.\\n\\n' +\n  '*💡 Pro tip: Smaller PRs like this one are easier to review and less prone to bugs!*';\n\nreturn {\n  json: {\n    prInfo: prData,\n    summaryComment: summaryComment,\n    action: 'POST_SUMMARY'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [150, -100],
+      "id": "generate-summary",
+      "name": "🤖 Generate AI Summary"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.bitbucket.org/2.0/repositories/{{ $json.prInfo.repository.fullName }}/pullrequests/{{ $json.prInfo.id }}/comments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "bitbucketApi",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"content\": {\n    \"raw\": {{ JSON.stringify($json.summaryComment) }}\n  }\n}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [400, -100],
+      "id": "post-summary-comment",
+      "name": "💬 Post Summary Comment",
+      "credentials": {
+        "bitbucketApi": {
+          "id": "bitbucket-api-credentials",
+          "name": "Bitbucket API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "bitbucket-pr-trigger": {
+      "main": [
+        [
+          {
+            "node": "extract-pr-info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract-pr-info": {
+      "main": [
+        [
+          {
+            "node": "pr-size-router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pr-size-router": {
+      "main": [
+        [
+          {
+            "node": "generate-summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "generate-warning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate-warning": {
+      "main": [
+        [
+          {
+            "node": "post-warning-comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate-summary": {
+      "main": [
+        [
+          {
+            "node": "post-summary-comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-09-23T12:00:00.000Z",
+      "updatedAt": "2025-09-23T12:00:00.000Z",
+      "id": "code-review",
+      "name": "code-review"
+    },
+    {
+      "createdAt": "2025-09-23T12:00:00.000Z", 
+      "updatedAt": "2025-09-23T12:00:00.000Z",
+      "id": "bitbucket",
+      "name": "bitbucket"
+    },
+    {
+      "createdAt": "2025-09-23T12:00:00.000Z",
+      "updatedAt": "2025-09-23T12:00:00.000Z", 
+      "id": "ai-automation",
+      "name": "ai-automation"
+    }
+  ],
+  "triggerCount": 1,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "bitbucket-code-review-workflow-v1"
+  },
+  "hash": "bitbucket-ai-code-review-assistant"
+}

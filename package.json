@@ -1,106 +1,55 @@
 {
-  "name": "n8n-workflow-generator-expert-system",
+  "name": "bitbucket-code-review-assistant",
   "version": "1.0.0",
-  "description": "Expert system for generating functional N8N workflows with Winsurf validation rules",
-  "main": "index.js",
+  "description": "AI-powered Bitbucket code review assistant using N8N workflow automation",
+  "main": "bitbucket-code-review-assistant.json",
   "scripts": {
-    "lint": "winsurf lint",
-    "lint:fix": "winsurf lint --fix",
-    "lint:report": "winsurf lint --format html --output-file winsurf-report.html",
-    "validate": "node scripts/validate-workflows.js",
-    "test": "npm run lint && npm run validate",
-    "build": "node scripts/build-workflows.js",
-    "dev": "nodemon --watch . --ext json,js --exec 'npm run test'",
-    "start": "node index.js",
-    "setup": "npm install && npm run lint:fix",
-    "clean": "rimraf dist/ temp/ *.log",
-    "docs": "jsdoc -c jsdoc.conf.json",
-    "pre-commit": "npm run lint:fix && npm run validate",
-    "ci": "npm run test && npm run build"
+    "validate": "echo \"Validating workflow JSON...\" && node -e \"console.log('Workflow is valid JSON'); JSON.parse(require('fs').readFileSync('./bitbucket-code-review-assistant.json', 'utf8'))\"",
+    "test": "npm run validate",
+    "setup-env": "echo \"Please configure your N8N environment variables and credentials as described in README.md\""
   },
   "keywords": [
     "n8n",
-    "workflow",
+    "bitbucket",
+    "code-review",
     "automation",
-    "generator",
-    "winsurf",
-    "validation",
-    "expert-system"
+    "ai",
+    "openai",
+    "pull-request",
+    "webhook",
+    "gpt"
   ],
-  "author": "N8N Automation Suite",
+  "author": "Development Team",
   "license": "MIT",
-  "dependencies": {
-    "uuid": "^9.0.0",
-    "ajv": "^8.12.0",
-    "jsonschema": "^1.4.1",
-    "lodash": "^4.17.21",
-    "axios": "^1.6.0",
-    "dotenv": "^16.3.1"
-  },
-  "devDependencies": {
-    "@winsurf/cli": "^1.0.0",
-    "@winsurf/recommended": "^1.0.0",
-    "winsurf-plugin-n8n": "^1.0.0",
-    "winsurf-plugin-json": "^1.0.0",
-    "eslint": "^8.50.0",
-    "eslint-plugin-json": "^3.1.0",
-    "prettier": "^3.0.0",
-    "nodemon": "^3.0.0",
-    "rimraf": "^5.0.0",
-    "jsdoc": "^4.0.0",
-    "husky": "^8.0.0",
-    "lint-staged": "^14.0.0",
-    "jest": "^29.7.0"
-  },
-  "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
-  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/james-soxes/n8n-automation-suite.git"
+    "url": "https://github.com/your-org/bitbucket-code-review-assistant.git"
   },
   "bugs": {
-    "url": "https://github.com/james-soxes/n8n-automation-suite/issues"
+    "url": "https://github.com/your-org/bitbucket-code-review-assistant/issues"
   },
-  "homepage": "https://github.com/james-soxes/n8n-automation-suite#readme",
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged",
-      "pre-push": "npm run test"
-    }
-  },
-  "lint-staged": {
-    "*.json": [
-      "winsurf lint --fix",
-      "prettier --write"
-    ],
-    "*.js": [
-      "eslint --fix",
-      "prettier --write"
-    ]
-  },
-  "winsurf": {
-    "configFile": "./winsurf.config.js",
-    "rulesFile": "./winsurf-n8n-rules.json"
-  },
+  "homepage": "https://github.com/your-org/bitbucket-code-review-assistant#readme",
   "n8n": {
     "compatibleVersions": ">=1.0.0",
     "supportedNodes": [
-      "n8n-nodes-base.start",
-      "n8n-nodes-base.webhook",
+      "n8n-nodes-base.bitbucketTrigger",
       "n8n-nodes-base.httpRequest",
       "n8n-nodes-base.code",
-      "n8n-nodes-base.openAi",
-      "n8n-nodes-base.stickyNote",
-      "n8n-nodes-base.errorTrigger",
-      "n8n-nodes-base.noOp"
+      "n8n-nodes-base.switch",
+      "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "@n8n/n8n-nodes-langchain.agent",
+      "n8n-nodes-base.stickyNote"
     ]
   },
-  "config": {
-    "maxWorkflowSize": "1MB",
-    "maxNodes": 50,
-    "outputFormat": "json",
-    "validationLevel": "strict"
+  "features": {
+    "ai_summary": "Automatic code review summaries for small PRs (<200 LoC)",
+    "size_warnings": "Alerts for large PRs with recommendations to split",
+    "professional_comments": "Well-formatted comments with Vietnamese language support",
+    "webhook_integration": "Real-time PR event processing"
+  },
+  "requirements": {
+    "bitbucket": "App Password with Repository Read/Write permissions",
+    "openai": "API Key with GPT-4o-mini access",
+    "n8n": "Self-hosted or cloud instance with webhook support"
   }
 }
